@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="bootstrap.min.css">
+	<title>Document</title>
+	<style>
+		.video{
+			height: 50vh;
+			width: 100%;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="row justify-content-between">
+			<div style="width:45%; height: 50vh; border: 2px solid black" id="our-video"></div>
+			<div style="width:45%; height: 50vh; border: 2px solid black" id="remote-video"></div>
+		</div>
+		<button class="btn btn-primary btn-large" id="start-call">Start Call</button>
+		
+		<input type="text" name="id" id="id">
+		<button class="btn btn-secondary btn-large" id="receive-call">Receive Call</button>
+	</div>
+	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+	<script>
+		const qSelect = el => document.querySelector(el);
+		let peerList = [];
+
+		document.addEventListener("DOMContentLoaded", (event) => {
+			const peer = new Peer();
+			let myStream;
+			const StartCallButton 	= qSelect('#start-call');
+			const ReceiveCallButton = qSelect('#receive-call');
+
+			StartCallButton.addEventListener('click', (event) => {
+				console.log('starting...');
+				peer.on('open',function (id){
+					console.log(id);
+					console.log('ringing...');
+				});
+			})
+
+			peer.on('call', function (call){
+				navigator.mediaDevices.getUserMedia({
+					video: true, audio: true
+				}).then((stream) => {
+					myStream = stream;
+					addOurVideo(stream);
+					call.answer(stream);
+					call.on('stream', function (remoteStream) {
+						if (!peerList.includes(call.peer)) {
+							addRemoteVideo(remoteStream);
+							peerList.push(call.peer);
+						}
+					})
+				}).catch((err) => {
+					console.log(err);
+				});
+			})
+
+			ReceiveCallButton.addEventListener('click', (e) => {
+				console.log('connecting..');
+				const id = qSelect('#id').value;
+				navigator.mediaDevices.getUserMedia({
+					video: true, audio: true
+				}).then((stream) => {
+					myStream = stream;
+					addOurVideo(stream);
+					let call = peer.call(id, stream);
+					call.on('stream', function (remoteStream) {
+						if (!peerList.includes(call.peer)) {
+							addRemoteVideo(remoteStream, id);
+							peerList.push(call.peer);
+						}
+					})
+				}).catch((err) => {
+					console.log(err);
+				});
+			});
+
+			const addRemoteVideo = (stream) => {
+				console.log('connected');
+				let video = document.createElement('video');
+					video.classList.add('video');
+					video.srcObject = stream;
+					video.play();
+
+				qSelect('#remote-video').append(video);
+			}
+
+			const addOurVideo = (stream) => {
+				console.log('connected');
+				let video = document.createElement('video');
+					video.classList.add('video');
+					video.srcObject = stream;
+					video.play();
+
+				qSelect('#our-video').append(video);
+			}
+		})
+	</script>
+</body>
+</html>
