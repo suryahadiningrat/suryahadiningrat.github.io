@@ -39,9 +39,9 @@
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
         // firebaseConfig
-		const peer = new Peer();
 		let myStream;
-        let is_volunteer = false;
+        const operatorPeer  = new Peer();
+        const volunteerPeer = new Peer();
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
         import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
@@ -60,47 +60,41 @@
         const app = initializeApp(firebaseConfig);
 
         const qSelect = el => document.querySelector(el);
-        let peerList = [];
 
         document.addEventListener("DOMContentLoaded", (event) => {
-            const peer = new Peer();
-            let myStream;
+            // Play Our Video
+            navigator.mediaDevices.getUserMedia({
+                video: true, audio: true
+            }).then((stream) => {
+                addUserVideo(stream);
+                myStream = stream;
+            });
 
-            peer.on('open',function (id){
-                console.log(id);
+            operatorPeer.on('open',function (id){
                 const db = getDatabase();
-                let pushed = push(ref(db, `operator`), { id, is_viewed: false });
+                let pushed = push(ref(db, `user/operator`), { id, is_viewed: false });
             }); 
 
-            peer.on('call', function (call){
-                navigator.mediaDevices.getUserMedia({
-                    video: true, audio: true
-                }).then((stream) => {
-                    myStream = stream;
-                    addOurVideo(stream);
-                    call.answer(stream);
-                    call.on('stream', function (remoteStream) {
-                        console.log(peerList);
-                        console.log(call.peer);
-                        console.log(is_volunteer);
-                        if (!peerList.includes(call.peer)) {
-                            is_volunteer = true;
-                            addRemoteVideo(remoteStream);
-                            peerList.push(call.peer);
-                        }
-                        if ((!peerList.includes(call.peer)) && (is_volunteer)) {
-                            console.log('volunteer');
-                            addVolunteerVideo(remoteStream);
-                            peerList.push(call.peer);
-                        }
-                    })
-                }).catch((err) => {
-                    console.log(err);
-                });
+            volunteerPeer.on('open',function (id){
+                const db = getDatabase();
+                let pushed = push(ref(db, `user/volunteer`), { id, is_viewed: false });
+            }); 
+
+            operatorPeer.on('call', function (call){
+                call.answer(myStream);
+                call.on('stream', function (remoteStream) {
+                    addOperatorVideo(remoteStream);
+                })
             })
 
-            const addRemoteVideo = (stream) => {
-                console.log('operator');
+            volunteerPeer.on('call', function (call){
+                call.answer(myStream);
+                call.on('stream', function (remoteStream) {
+                    addVolunteerVideo(remoteStream);
+                })
+            })
+
+            const addOperatorVideo = (stream) => {
                 let video = document.createElement('video');
                     video.classList.add('video');
                     video.srcObject = stream;
@@ -109,8 +103,7 @@
                 qSelect('#operator-video').append(video);
             }
 
-            const addOurVideo = (stream) => {
-                console.log('user');
+            const addUserVideo = (stream) => {
                 let video = document.createElement('video');
                     video.classList.add('video');
                     video.srcObject = stream;
@@ -120,7 +113,6 @@
             }
 
             const addVolunteerVideo = (stream) => {
-                console.log('volunteer');
                 let video = document.createElement('video');
                     video.classList.add('video');
                     video.srcObject = stream;
