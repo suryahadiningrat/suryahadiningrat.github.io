@@ -40,12 +40,14 @@
     <button class="btn btn-primary" id="accept-phone" style="bottom: 20px; position: absolute; left: 50%; transform: translateX(-50%);display: none;">Accept Phone</button>
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
-        const peer = new Peer();
         let myStream;
         const qSelect = el => document.querySelector(el);
-        let remotePeerID;
+        const userPeer  = new Peer();
+        const volunteerPeer = new Peer();
+
+        let userPeerID;
+        let volunteerPeerID;
         let peerList = [];
-        let is_volunteer = false;
 
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
@@ -67,15 +69,15 @@
         const database = getDatabase();
 
         document.addEventListener("DOMContentLoaded", (event) => {
-            const scheduleRef = ref(database, `/operator`);
+            const scheduleRef = ref(database, `/user/operator`);
             onChildAdded(scheduleRef, (snapshot) => {
                 const data = snapshot.val();
                 if ( !data.is_viewed ) {
-                    let scheduleChildRef = ref(database, `/operator/${snapshot.key}`)
+                    let scheduleChildRef = ref(database, `/user/operator/${snapshot.key}`)
                     update(scheduleChildRef, {
                         is_viewed: true
                     });
-                    remotePeerID = data.id;
+                    userPeerID = data.id;
                     
                     showAnswerButton();
                 }
@@ -92,16 +94,11 @@
             }).then((stream) => {
                 myStream = stream;
                 addOurVideo(stream);
-                let call = peer.call(remotePeerID, stream);
+                let call = userPeer.call(userPeerID, stream);
                 call.on('stream', function (remoteStream) {
-                    console.log(remoteStream);
+                    console.log('ok');
                     if (!peerList.includes(call.peer)) {
-                        is_volunteer = true;
-                        addRemoteVideo(remoteStream, remotePeerID);
-                        peerList.push(call.peer);
-                    }
-                    if ((!peerList.includes(call.peer)) && (is_volunteer)) {
-                        addVolunteerVideo(remoteStream, remotePeerID);
+                        addRemoteVideo(remoteStream);
                         peerList.push(call.peer);
                     }
                 })
@@ -111,11 +108,11 @@
             // qSelect('#accept-phone').remove();
         });
         
-        qSelect('#invite-volunteer-button').addEventListener('click', () => {
-            console.log('invited..');
-            const db = getDatabase();
-            let pushed = push(ref(db, `volunteer`), { id: remotePeerID, is_viewed: false });
-        });
+        // qSelect('#invite-volunteer-button').addEventListener('click', () => {
+        //     console.log('invited..');
+        //     const db = getDatabase();
+        //     let pushed = push(ref(db, `volunteer`), { id: remotePeerID, is_viewed: false });
+        // });
 
         const addRemoteVideo = (stream) => {
             let video = document.createElement('video');
@@ -127,7 +124,6 @@
         }
 
         const addOurVideo = (stream) => {
-            console.log('connected');
             let video = document.createElement('video');
                 video.classList.add('video');
                 video.srcObject = stream;
@@ -137,7 +133,6 @@
         }
         
         const addVolunteerVideo = (stream) => {
-            console.log('connected');
             let video = document.createElement('video');
                 video.classList.add('video');
                 video.srcObject = stream;
