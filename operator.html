@@ -10,6 +10,8 @@
     <video id="user"></video>
     <video id="operator"></video>
     <video id="volunteer"></video>
+    
+    <p id="rdp"></p>
 
     <button onclick="call()">Answer Call</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.0/simplepeer.min.js" integrity="sha512-0f7Ahsuvr+/P2btTY4mZIw9Vl23lS6LY/Y7amdkmUg2dqsUF+cTe4QjWvj/NIBHJoGksOiqndKQuI9yzn2hB0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -31,22 +33,22 @@
                 userPeer.signal(JSON.parse(rdp));
 
                 userPeer.on('signal', (data) => {
-                    console.log(JSON.stringify(data));
+                    document.querySelector('#rdp').innerText = JSON.stringify(data);
                 });
-
-                userPeer.on('stream', (stream) => {
-                    // got remote video stream, now let's show it in a video tag
-                    const video = document.querySelector('#user')
-
-                    if ('srcObject' in video) {
-                        video.srcObject = stream
-                    } else {
-                        video.src = window.URL.createObjectURL(stream) // for older browsers
-                    }
-
-                    video.play()
-                })
             }
+
+            userPeer.on('stream', (stream) => {
+                // got remote video stream, now let's show it in a video tag
+                const video = document.querySelector('#user')
+
+                if ('srcObject' in video) {
+                    video.srcObject = stream
+                } else {
+                    video.src = window.URL.createObjectURL(stream) // for older browsers
+                }
+
+                video.play()
+            })
         }
 
         const playOurVideo = (stream) => {
