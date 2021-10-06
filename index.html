@@ -15,6 +15,15 @@
         #user-video video{
             height: 15vh;
         }
+
+        #volunteer-video {
+            bottom: 20px;
+            left: 20px;
+            position: absolute !important;
+        }
+        #volunteer-video video{
+            height: 15vh;
+        }
 		.video{
 			height: 50vh;
 			width: 100%;
@@ -29,6 +38,10 @@
     <script type="module">
         // firebaseConfig
 		let myStream;
+        let is_user_added = false;
+        let is_operator_added = false;
+        let is_volunteer_added = false;
+
         const operatorPeer  = new Peer();
         const volunteerPeer = new Peer();
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
@@ -84,33 +97,43 @@
             })
 
             const addOperatorVideo = (stream) => {
-                let video = document.createElement('video');
-                    video.classList.add('video');
-                    video.style.height = "100vh";
-                    video.style.objectFit = "cover";
-                    video.srcObject = stream;
-                    video.style.minWidth = '30%';
-                    video.play();
+                if ( !is_operator_added ) {
+                    let video = document.createElement('video');
+                        video.classList.add('video');
+                        video.style.height = "100vh";
+                        video.style.objectFit = "cover";
+                        video.srcObject = stream;
+                        video.style.minWidth = '30%';
+                        video.play();
 
-                qSelect('#operator-video').append(video);
+                    qSelect('#operator-video').append(video);
+
+                    is_operator_added = true;
+                }
             }
 
             const addUserVideo = (stream) => {
-                let video = document.createElement('video');
-                    video.classList.add('video');
-                    video.srcObject = stream;
-                    video.play();
+                if ( !is_user_added ) {
+                    let video = document.createElement('video');
+                        video.classList.add('video');
+                        video.srcObject = stream;
+                        video.play();
 
-                qSelect('#user-video').append(video);
+                    qSelect('#user-video').append(video);
+                    is_user_added = true;
+                }
             }
 
             const addVolunteerVideo = (stream) => {
-                let video = document.createElement('video');
-                    video.classList.add('video');
-                    video.srcObject = stream;
-                    video.play();
+                if ( !is_volunteer_added ) {
+                    let video = document.createElement('video');
+                        video.classList.add('video');
+                        video.srcObject = stream;
+                        video.play();
 
-                qSelect('#volunteer-video').append(video);
+                    qSelect('#volunteer-video').append(video);
+                    is_volunteer_added = true;
+                }
             }
         })
     </script>
