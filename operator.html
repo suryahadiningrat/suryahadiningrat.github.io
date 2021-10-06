@@ -7,36 +7,25 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 	<title>Operator page</title>
 	<style>
+        #operator-video {
+            bottom: 20px;
+            right: 20px;
+            position: absolute !important;
+        }
+        #operator-video video{
+            height: 15vh;
+        }
 		.video{
 			height: 50vh;
 			width: 100%;
 		}
-        #operator-video video{
-            position: absolute;
-            bottom: 0px;
-            left: 0;
-        }
-
-        .main-video{
-            width: 100%;
-            height: 100vh;
-            background-color: blue;
-        }
-
-        .secondary-video{
-            width: 40%;
-            height: 30vh;
-            position: absolute;
-            bottom: 0;
-            background-color: white;
-        }
 	</style>
 </head>
 <body>
     <button class="btn btn-primary" style="position: absolute;right: 10px; top: 20px;" id="invite-volunteer-button" onclick="console.log('k')">Invite Volunteer</button>
-    <div class="main-video text-center" id="user-video">User Video</div>
-    <div class="secondary-video text-center" id="operator-video">Operator Video</div>
-    <div class="secondary-video text-center"style="right: 0;" id="volunteer-video">Volunteer Video</div>
+    <div id="user-video"></div>
+    <div id="operator-video"></div>
+    <div id="volunteer-video"></div>
     <button class="btn btn-primary" id="accept-phone" style="bottom: 20px; position: absolute; left: 50%; transform: translateX(-50%);display: none;">Accept Phone</button>
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
@@ -122,15 +111,6 @@
             })
         })
 
-        const addUserVideo = (stream) => {
-            let video = document.createElement('video');
-                video.classList.add('video');
-                video.srcObject = stream;
-                video.play();
-
-            qSelect('#user-video').append(video);
-        }
-
         const addOperatorVideo = (stream) => {
             let video = document.createElement('video');
                 video.classList.add('video');
@@ -139,7 +119,19 @@
 
             qSelect('#operator-video').append(video);
         }
-        
+
+        const addUserVideo = (stream) => {
+            let video = document.createElement('video');
+                video.classList.add('video');
+                video.style.height = "100vh";
+                video.style.objectFit = "cover";
+                video.srcObject = stream;
+                video.style.minWidth = '30%';
+                video.play();
+
+            qSelect('#user-video').append(video);
+        }
+
         const addVolunteerVideo = (stream) => {
             let video = document.createElement('video');
                 video.classList.add('video');

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	<title>User page</title>
+	<style>
+		.video{
+			height: 50vh;
+			width: 100%;
+		}
+        #operator-video video{
+            position: absolute;
+            bottom: 0px;
+            left: 0;
+        }
+
+        .main-video{
+            width: 100%;
+            height: 100vh;
+            background-color: blue;
+        }
+
+        .secondary-video{
+            width: 40%;
+            height: 30vh;
+            position: absolute;
+            bottom: 0;
+            background-color: white;
+        }
+	</style>
+</head>
+<body>
+    <div class="main-video text-center" id="user-video">User Video</div>
+    <div class="secondary-video text-center" id="operator-video">Operator Video</div>
+    <div class="secondary-video text-center"style="right: 0;" id="volunteer-video">Volunteer Video</div>
+	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script type="module">
+        // firebaseConfig
+		let myStream;
+        const operatorPeer  = new Peer();
+        const volunteerPeer = new Peer();
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBF9vuotZeqwkLDGgc3hM_PmuwEz_rCMLE",
+            authDomain: "webrtc-test-1e07e.firebaseapp.com",
+            databaseURL: "https://webrtc-test-1e07e-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "webrtc-test-1e07e",
+            storageBucket: "webrtc-test-1e07e.appspot.com",
+            messagingSenderId: "331519699004",
+            appId: "1:331519699004:web:bdf99364e08e6ecb85bb39",
+            measurementId: "G-XH9CNSCXZ9"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        const qSelect = el => document.querySelector(el);
+
+        document.addEventListener("DOMContentLoaded", (event) => {
+            // Play Our Video
+            navigator.mediaDevices.getUserMedia({
+                video: true, audio: true
+            }).then((stream) => {
+                addUserVideo(stream);
+                myStream = stream;
+            });
+
+            operatorPeer.on('open',function (id){
+                const db = getDatabase();
+                let pushed = push(ref(db, `user/operator`), { id, is_viewed: false });
+            }); 
+
+            volunteerPeer.on('open',function (id){
+                const db = getDatabase();
+                let pushed = push(ref(db, `user/volunteer`), { id, is_viewed: false });
+            }); 
+
+            operatorPeer.on('call', function (call){
+                call.answer(myStream);
+                call.on('stream', function (remoteStream) {
+                    addOperatorVideo(remoteStream);
+                })
+            })
+
+            volunteerPeer.on('call', function (call){
+                call.answer(myStream);
+                call.on('stream', function (remoteStream) {
+                    addVolunteerVideo(remoteStream);
+                })
+            })
+
+            const addOperatorVideo = (stream) => {
+                let video = document.createElement('video');
+                    video.classList.add('video');
+                    video.srcObject = stream;
+                    video.play();
+
+                qSelect('#operator-video').append(video);
+            }
+
+            const addUserVideo = (stream) => {
+                let video = document.createElement('video');
+                    video.classList.add('video');
+                    video.srcObject = stream;
+                    video.play();
+
+                qSelect('#user-video').append(video);
+            }
+
+            const addVolunteerVideo = (stream) => {
+                let video = document.createElement('video');
+                    video.classList.add('video');
+                    video.srcObject = stream;
+                    video.play();
+
+                qSelect('#volunteer-video').append(video);
+            }
+        })
+    </script>
+</body>
+</html>
