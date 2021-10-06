@@ -28,13 +28,25 @@
 			height: 50vh;
 			width: 100%;
 		}
+        .called{
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 1);
+            z-index: 99999999;
+            position: absolute;
+            display: none;
+        }
 	</style>
 </head>
-<body>
+<body style="background-color: #f4f4f4;">
     <div id="user-video"></div>
     <div id="operator-video"></div>
     <div id="volunteer-video"></div>
-    <button class="btn btn-primary" id="accept-phone" style="bottom: 20px; position: absolute; left: 50%; transform: translateX(-50%);display: none;">Accept Phone</button>
+    <div class="called">
+        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 50vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Incoming Call...</p>
+        <img src="assets/img/icons/blue/accept-call.webp" style="width: 15%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title="" id="accept-phone" />
+    </div>
+    <p id="no-call" style="position: absolute;left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold;">Belum ada Panggilan</p>
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
         let myStream;
@@ -74,7 +86,7 @@
                     update(scheduleChildRef, {
                         is_viewed: true
                     });
-                    operatorPeerID = data.id;
+                    operatorPeerID = data.volunteerPeerID;
                     showAnswerButton();
 
                     // Get User Peer ID
@@ -94,20 +106,23 @@
         })
 
         const showAnswerButton = () => {
-            qSelect('#accept-phone').style.display = 'block';
+            qSelect('.called').style.display = 'block';
         }
 
         qSelect('#accept-phone').addEventListener('click', () => {
             navigator.mediaDevices.getUserMedia({
                 video: true, audio: true
             }).then((stream) => {
+                console.log(operatorPeerID);
                 myStream = stream;
                 addVolunteerVideo(stream);
+                console.log('accepted');
 
                 // User
                 let callUser = userPeer.call(userPeerID, stream);
                 callUser.on('stream', function (remoteStream) {
                     if (!peerList.includes(callUser.peer)) {
+                        console.log('user');
                         addUserVideo(remoteStream);
                         peerList.push(callUser.peer);
                     }
@@ -116,6 +131,7 @@
                 // Operator
                 let callOperator = operatorPeer.call(operatorPeerID, stream);
                 callOperator.on('stream', function (remoteStream) {
+                        console.log('operator');
                     if (!peerList.includes(callOperator.peer)) {
                         addOperatorVideo(remoteStream);
                         peerList.push(callOperator.peer);
@@ -125,6 +141,7 @@
                 console.log(err);
             });
             qSelect('#accept-phone').remove();
+            qSelect('#no-call').remove();
         });
 
         const addOperatorVideo = (stream) => {

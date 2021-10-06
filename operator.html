@@ -28,13 +28,25 @@
 			height: 50vh;
 			width: 100%;
 		}
+        .called{
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 1);
+            z-index: 99999999;
+            position: absolute;
+            display: none;
+        }
 	</style>
 </head>
-<body>
+<body style="background-color: #f4f4f4;">
     <div id="user-video"></div>
     <div id="operator-video"></div>
     <div id="volunteer-video"></div>
-    <button class="btn btn-primary" id="accept-phone" style="bottom: 20px; position: absolute; left: 50%; transform: translateX(-50%);display: none;">Accept Phone</button>
+    <div class="called">
+        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 50vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Incoming Call...</p>
+        <img src="assets/img/icons/blue/accept-call.webp" style="width: 15%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title="" id="accept-phone" />
+    </div>
+    <p id="no-call" style="position: absolute;left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold;">Belum ada Panggilan</p>
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
         let myStream;
@@ -47,6 +59,7 @@
         const volunteerPeer = new Peer();
 
         let userPeerID;
+        let volunteerPeerID;
         let peerList = [];
 
         // Import the functions you need from the SDKs you need
@@ -85,11 +98,12 @@
         })
 
         const showAnswerButton = () => {
-            qSelect('#accept-phone').style.display = 'block';
+            qSelect('.called').style.display = 'block';
         }
 
         // User Peer
         qSelect('#accept-phone').addEventListener('click', () => {
+            qSelect('#call-text').innerText = 'Connecting...';
             navigator.mediaDevices.getUserMedia({
                 video: true, audio: true
             }).then((stream) => {
@@ -109,11 +123,10 @@
             qSelect('#accept-phone').remove();
         });
 
-        // Volunteer Peer
-        
+        // Volunteer Peer        
         volunteerPeer.on('open',function (id){
-            const db = getDatabase();
-            let pushed = push(ref(db, `operator/volunteer`), { id, is_viewed: false });
+            console.log(id);
+            volunteerPeerID = id
         }); 
 
         volunteerPeer.on('call', function (call){
@@ -147,6 +160,20 @@
 
                 qSelect('#user-video').append(video);
                 is_user_added = true;
+                qSelect('#no-call').remove();
+                qSelect('.called').remove();
+                
+                const invite_button = document.createElement("IMG");
+                      invite_button.setAttribute('id', 'invite');
+                      invite_button.setAttribute('style', 'width: 8%; heigth: auto; position: absolute; right: 20px; top: 20px;');
+                      invite_button.setAttribute('src', 'assets/img/icons/white/user-add.svg');
+                document.body.appendChild(invite_button);
+
+                qSelect('#invite').addEventListener('click', () => {
+                    const db = getDatabase();
+                    let pushed = push(ref(db, `operator/volunteer`), { volunteerPeerID, is_viewed: false });
+                    qSelect('#invite').remove();
+                });
             }
         }
 

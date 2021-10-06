@@ -1,141 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	<title>User page</title>
-	<style>
-        #user-video {
-            bottom: 20px;
-            right: 20px;
-            position: absolute !important;
-        }
-        #user-video video{
-            height: 20vh;
-        }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, minimal-ui">
+    <title>Tolong+</title>
+    <link rel="stylesheet" href="assets/vendor/swiper/swiper.min.css">
+    <link rel="stylesheet" href="assets/css/default.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 
-        #volunteer-video {
-            bottom: 20px;
-            left: 20px;
-            position: absolute !important;
-        }
-        #volunteer-video video{
-            height: 20vh;
-        }
-		.video{
-			height: 50vh;
-			width: 100%;
-		}
-	</style>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,700,900" rel="stylesheet">
 </head>
-<body>
-    <div id="user-video"></div>
-    <div id="operator-video"></div>
-    <div id="volunteer-video"></div>
-	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-    <script type="module">
-        // firebaseConfig
-		let myStream;
-        let is_user_added = false;
-        let is_operator_added = false;
-        let is_volunteer_added = false;
 
-        const operatorPeer  = new Peer();
-        const volunteerPeer = new Peer();
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+<body onload="startTime()" style="overflow: scroll;">
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBF9vuotZeqwkLDGgc3hM_PmuwEz_rCMLE",
-            authDomain: "webrtc-test-1e07e.firebaseapp.com",
-            databaseURL: "https://webrtc-test-1e07e-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "webrtc-test-1e07e",
-            storageBucket: "webrtc-test-1e07e.appspot.com",
-            messagingSenderId: "331519699004",
-            appId: "1:331519699004:web:bdf99364e08e6ecb85bb39",
-            measurementId: "G-XH9CNSCXZ9"
-        };
+    <!-- Overlay panel -->
+    <div class="body-overlay"></div>
+    <!-- Left panel -->
+    <div id="panel-left"></div>
+    <!-- Right panel -->
+    <div id="panel-right"></div>
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
 
-        const qSelect = el => document.querySelector(el);
+    <div class="page page--main" data-page="main">
 
-        document.addEventListener("DOMContentLoaded", (event) => {
-            // Play Our Video
-            navigator.mediaDevices.getUserMedia({
-                video: true, audio: true
-            }).then((stream) => {
-                addUserVideo(stream);
-                myStream = stream;
-            });
+        <!-- HEADER -->
+        <header class="header header--page header--fixed bg-transparent">
+            <div class="header__inner">
+                <div class="header__icon header__icon--menu icon-dark open-panel" data-panel="left">
+                    <span></span><span></span><span></span><span></span><span></span><span></span></a>
+                </div>
+                <div class="header__logo header__logo--text text-dark text-center small-text">
+                    <!-- <span>Jl. Raden Saleh S Bustaman </span> -->
+                    <form action="">
+                        <select class="select-location">
+                            <option>Jl. Raden Saleh S Bustaman </option>
+                        </select>
+                    </form>
+                </div>
+                <div class="header__icon open-panel" data-panel="right">
+                    <img src="assets/img/icons/black/search.svg" alt="" title="" />
+                </div>
+            </div>
+        </header>
 
-            operatorPeer.on('open',function (id){
-                const db = getDatabase();
-                let pushed = push(ref(db, `user/operator`), { id, is_viewed: false });
-            }); 
 
-            volunteerPeer.on('open',function (id){
-                const db = getDatabase();
-                let pushed = push(ref(db, `user/volunteer`), { id, is_viewed: false });
-            }); 
+        <!-- PAGE CONTENT -->
+        <div class="page__content page__content--with-header page__content--with-bottom-nav pt-50">
+            <div class="section-alert">
+                <a href="user-oncall.html">
+                    <button class="alert bg-danger">
+                        <img src="assets/img/vector-alert.png" class="img-alert" alt="" title="" />
+                    </button>
+                </a>
+            </div>
+            <div class="section-heading text-center">
+                <h4 class="text-dark"><strong>TEKAN TOMBOL HANYA DALAM<br>KEADAAN DARURAT</strong></h4>
+                <small class="small-text text-light">Tetap tenang dan patuhi protokol kesehatan!</small>
+            </div>
+            <div class="cards cards--11 mt-50">
+                <div class="card card--style-inline card--style-inline-bg card--style-round-corners">
+                    <div class="card__details">
+                        <h4 class="card__title">Riwayat Saya</h4>
+                        <p class="card__text">Risus fames mus.</p>
+                    </div>
+                    <div class="card__more">
+                        <a href="#"><img src="/assets/img/vector-right-arrow.png" style="max-width: unset;"></a>
+                    </div>
+                </div>
+            </div>
 
-            operatorPeer.on('call', function (call){
-                call.answer(myStream);
-                call.on('stream', function (remoteStream) {
-                    addOperatorVideo(remoteStream);
-                })
-            })
+            <div class="bottom-navigation fixed custom-nav">
+                <div class="swiper-slide">
+                    <ul class="bottom-navigation__icons">
+                        <li>
+                            <a href=""><img src="assets/img/vector-medical.png" alt=""
+                                    title="" /><span>Donasi</span></a>
+                        </li>
+                        <li>
+                            <a href="user-oncall.html"><img src="assets/img/vector-nav.png" alt="" title="" /></a>
+                        </li>
+                        <li>
+                            <a href=""><img src="assets/img/vector-gear.png" alt="" title="" /><span>Bantuan</span></a>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- PAGE END -->
 
-            volunteerPeer.on('call', function (call){
-                call.answer(myStream);
-                call.on('stream', function (remoteStream) {
-                    addVolunteerVideo(remoteStream);
-                })
-            })
+    <script src="assets/vendor/jquery/jquery-3.5.1.min.js"></script>
+    <script src="assets/vendor/jquery/jquery.validate.min.js"></script>
+    <script src="assets/vendor/swiper/swiper.min.js"></script>
+    <script src="assets/js/jquery.custom.js"></script>
 
-            const addOperatorVideo = (stream) => {
-                if ( !is_operator_added ) {
-                    let video = document.createElement('video');
-                        video.classList.add('video');
-                        video.style.height = "100vh";
-                        video.style.objectFit = "cover";
-                        video.srcObject = stream;
-                        video.style.minWidth = '30%';
-                        video.play();
 
-                    qSelect('#operator-video').append(video);
-
-                    is_operator_added = true;
-                }
-            }
-
-            const addUserVideo = (stream) => {
-                if ( !is_user_added ) {
-                    let video = document.createElement('video');
-                        video.classList.add('video');
-                        video.srcObject = stream;
-                        video.play();
-
-                    qSelect('#user-video').append(video);
-                    is_user_added = true;
-                }
-            }
-
-            const addVolunteerVideo = (stream) => {
-                if ( !is_volunteer_added ) {
-                    let video = document.createElement('video');
-                        video.classList.add('video');
-                        video.srcObject = stream;
-                        video.play();
-
-                    qSelect('#volunteer-video').append(video);
-                    is_volunteer_added = true;
-                }
-            }
-        })
-    </script>
 </body>
+
 </html>

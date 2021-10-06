@@ -7,39 +7,52 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 	<title>User page</title>
 	<style>
+        #user-video {
+            bottom: 20px;
+            right: 20px;
+            position: absolute !important;
+        }
+        #user-video video{
+            height: 20vh;
+        }
+
+        #volunteer-video {
+            bottom: 20px;
+            left: 20px;
+            position: absolute !important;
+        }
+        #volunteer-video video{
+            height: 20vh;
+        }
 		.video{
 			height: 50vh;
 			width: 100%;
 		}
-        #operator-video video{
-            position: absolute;
-            bottom: 0px;
-            left: 0;
-        }
-
-        .main-video{
+        .ringing{
             width: 100%;
             height: 100vh;
-            background-color: blue;
-        }
-
-        .secondary-video{
-            width: 40%;
-            height: 30vh;
+            background-color: rgba(0, 0, 0, 1);
+            z-index: 99999999;
             position: absolute;
-            bottom: 0;
-            background-color: white;
         }
 	</style>
 </head>
 <body>
-    <div class="main-video text-center" id="user-video">User Video</div>
-    <div class="secondary-video text-center" id="operator-video">Operator Video</div>
-    <div class="secondary-video text-center"style="right: 0;" id="volunteer-video">Volunteer Video</div>
+    <div class="ringing">
+        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 50vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Ringing...</p>
+        <img src="assets/img/icons/red/call.svg" style="width: 15%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title="" onclick="decline()" />
+    </div>
+    <div id="user-video"></div>
+    <div id="operator-video"></div>
+    <div id="volunteer-video"></div>
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
         // firebaseConfig
 		let myStream;
+        let is_user_added = false;
+        let is_operator_added = false;
+        let is_volunteer_added = false;
+
         const operatorPeer  = new Peer();
         const volunteerPeer = new Peer();
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
@@ -81,6 +94,7 @@
             }); 
 
             operatorPeer.on('call', function (call){
+                qSelect('#call-text').innerText = 'Connecting...';
                 call.answer(myStream);
                 call.on('stream', function (remoteStream) {
                     addOperatorVideo(remoteStream);
@@ -95,30 +109,44 @@
             })
 
             const addOperatorVideo = (stream) => {
-                let video = document.createElement('video');
-                    video.classList.add('video');
-                    video.srcObject = stream;
-                    video.play();
+                if ( !is_operator_added ) {
+                    let video = document.createElement('video');
+                        video.classList.add('video');
+                        video.style.height = "100vh";
+                        video.style.objectFit = "cover";
+                        video.srcObject = stream;
+                        video.style.minWidth = '30%';
+                        video.play();
 
-                qSelect('#operator-video').append(video);
+                    qSelect('#operator-video').append(video);
+
+                    is_operator_added = true;
+                    qSelect('.ringing').remove();
+                }
             }
 
             const addUserVideo = (stream) => {
-                let video = document.createElement('video');
-                    video.classList.add('video');
-                    video.srcObject = stream;
-                    video.play();
+                if ( !is_user_added ) {
+                    let video = document.createElement('video');
+                        video.classList.add('video');
+                        video.srcObject = stream;
+                        video.play();
 
-                qSelect('#user-video').append(video);
+                    qSelect('#user-video').append(video);
+                    is_user_added = true;
+                }
             }
 
             const addVolunteerVideo = (stream) => {
-                let video = document.createElement('video');
-                    video.classList.add('video');
-                    video.srcObject = stream;
-                    video.play();
+                if ( !is_volunteer_added ) {
+                    let video = document.createElement('video');
+                        video.classList.add('video');
+                        video.srcObject = stream;
+                        video.play();
 
-                qSelect('#volunteer-video').append(video);
+                    qSelect('#volunteer-video').append(video);
+                    is_volunteer_added = true;
+                }
             }
         })
     </script>
