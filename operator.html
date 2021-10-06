@@ -46,6 +46,7 @@
         const volunteerPeer = new Peer();
 
         let userPeerID;
+        let volunteerPeerID;
         let peerList = [];
 
         // Import the functions you need from the SDKs you need
@@ -87,42 +88,33 @@
             qSelect('#accept-phone').style.display = 'block';
         }
 
-        // User Peer
         qSelect('#accept-phone').addEventListener('click', () => {
             navigator.mediaDevices.getUserMedia({
                 video: true, audio: true
             }).then((stream) => {
                 myStream = stream;
-                addOperatorVideo(stream);
+                addOurVideo(stream);
                 let call = userPeer.call(userPeerID, stream);
                 call.on('stream', function (remoteStream) {
                     console.log('ok');
                     if (!peerList.includes(call.peer)) {
-                        addUserVideo(remoteStream);
+                        addRemoteVideo(remoteStream);
                         peerList.push(call.peer);
                     }
                 })
             }).catch((err) => {
                 console.log(err);
             });
-            qSelect('#accept-phone').remove();
+            // qSelect('#accept-phone').remove();
         });
-
-        // Volunteer Peer
         
-        volunteerPeer.on('open',function (id){
-            const db = getDatabase();
-            let pushed = push(ref(db, `operator/volunteer`), { id, is_viewed: false });
-        }); 
+        // qSelect('#invite-volunteer-button').addEventListener('click', () => {
+        //     console.log('invited..');
+        //     const db = getDatabase();
+        //     let pushed = push(ref(db, `volunteer`), { id: remotePeerID, is_viewed: false });
+        // });
 
-        volunteerPeer.on('call', function (call){
-            call.answer(myStream);
-            call.on('stream', function (remoteStream) {
-                addVolunteerVideo(remoteStream);
-            })
-        })
-
-        const addUserVideo = (stream) => {
+        const addRemoteVideo = (stream) => {
             let video = document.createElement('video');
                 video.classList.add('video');
                 video.srcObject = stream;
@@ -131,7 +123,7 @@
             qSelect('#user-video').append(video);
         }
 
-        const addOperatorVideo = (stream) => {
+        const addOurVideo = (stream) => {
             let video = document.createElement('video');
                 video.classList.add('video');
                 video.srcObject = stream;
