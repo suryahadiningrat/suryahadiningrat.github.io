@@ -28,7 +28,7 @@
 			height: 50vh;
 			width: 100%;
 		}
-        .ringing{
+        .calling{
             width: 100%;
             height: 100vh;
             background-color: rgba(0, 0, 0, 1);
@@ -39,13 +39,16 @@
 </head>
 <body>
     <!-- <div id="test"></div> -->
-    <div class="ringing">
-        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 50vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Ringing...</p>
-        <img src="assets/img/icons/red/call.svg" style="width: 15%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title="" onclick="decline()" />
+    <div class="calling">
+        <div style="width: 150px; height: 150px; border-radius: 100px; background-image: url('assets/img/istockphoto-936004740-612x612.jpg');background-position: center; background-size: cover; position: absolute; left: 50%; transform: translate(-50%, -50%); top: 50vh;"></div>
+        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 65vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Calling...</p>
+        <img id="decline" src="assets/img/icons/red/call.svg" style="width: 15%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title=""/>
     </div>
     <div id="user-video"></div>
     <div id="operator-video"></div>
     <div id="volunteer-video"></div>
+    <img id="end_call" src="https://icon-library.com/images/end-call-icon/end-call-icon-9.jpg" style="width: 18%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title=""/>
+    
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
         // firebaseConfig
@@ -53,6 +56,13 @@
         let is_user_added = false;
         let is_operator_added = false;
         let is_volunteer_added = false;
+
+        let operatorPeerID;
+        let volunteerPeerID;
+        let peered = 0;
+
+        let operatorStream;
+        let volunteerStream;
 
         const operatorPeer  =  new Peer({
             config: {'iceServers': [
@@ -77,7 +87,7 @@
         });
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+        import { getDatabase, ref, push, update, onChildAdded } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBF9vuotZeqwkLDGgc3hM_PmuwEz_rCMLE",
@@ -94,6 +104,8 @@
         const app = initializeApp(firebaseConfig);
 
         const qSelect = el => document.querySelector(el);
+        let operatorKey;
+        let volunteerKey;
 
         document.addEventListener("DOMContentLoaded", (event) => {
             // Play Our Video
@@ -109,12 +121,16 @@
                 const db = getDatabase();
                 let pushed = push(ref(db, `user/operator`), { id, is_viewed: false });
                 // qSelect('#test').innerText += '/n push operator peer';
+                operatorKey = pushed.key;
+                operatorPeerID = id;
             }); 
 
             volunteerPeer.on('open',function (id){
                 const db = getDatabase();
                 let pushed = push(ref(db, `user/volunteer`), { id, is_viewed: false });
                 // qSelect('#test').innerText += '/n push volunteer peer';
+                volunteerKey = pushed.key;
+                volunteerPeerID = id;
             }); 
 
             operatorPeer.on('call', function (call){
@@ -136,6 +152,8 @@
 
             const addOperatorVideo = (stream) => {
                 if ( !is_operator_added ) {
+                    operatorStream = stream;
+                    peered++;
                     let video = document.createElement('video');
                         video.classList.add('video');
                         video.style.height = "100vh";
@@ -147,8 +165,27 @@
                     qSelect('#operator-video').append(video);
 
                     is_operator_added = true;
-                    qSelect('.ringing').remove();
-                // qSelect('#test').innerText += '/n adding video operator';
+                    qSelect('.calling').remove();
+                    // qSelect('#test').innerText += '/n adding video operator';
+
+                    // operator connection on close
+                    const database = getDatabase();
+                    let operatorChildRef = ref(database, `operator/user/${operatorPeerID}`)
+                    onChildAdded(operatorChildRef, (snapshot) => {
+                        if (snapshot.key == 'disconnected') {
+                            peered--;
+                            isVideoEnded('operator');
+                        }
+                    });
+                    
+                    // volunteer connection on close
+                    let volunteerChildRef = ref(database, `volunteer/user/${volunteerPeerID}`)
+                    onChildAdded(volunteerChildRef, (snapshot) => {
+                        if (snapshot.key == 'disconnected') {
+                            peered--;
+                            isVideoEnded('volunteer');
+                        }
+                    });
                 }
             }
 
@@ -167,15 +204,85 @@
 
             const addVolunteerVideo = (stream) => {
                 if ( !is_volunteer_added ) {
+                    peered++;
+                    volunteerStream = stream;
                     let video = document.createElement('video');
                         video.classList.add('video');
+                        video.style.height = "100vh";
+                        video.style.objectFit = "cover";
+                        video.style.minWidth = '30%';
                         video.srcObject = stream;
                         video.play();
 
-                    qSelect('#volunteer-video').append(video);
+                    let operatorVideo = document.createElement('video');
+                        operatorVideo.classList.add('video');
+                        operatorVideo.srcObject = operatorStream;
+                        operatorVideo.play();
+
+                    qSelect('#operator-video video').remove();
+                    qSelect('#operator-video').append(video);
+
+                    qSelect('#volunteer-video').append(operatorVideo);
                     is_volunteer_added = true;
 
                     // qSelect('#test').innerText += '/n adding volunteer video';
+                }
+            }
+            
+            qSelect('#decline').addEventListener('click', () => {
+                onDisconnect();
+            });
+            
+            qSelect('#end_call').addEventListener('click', () => {
+                onDisconnect();
+            });
+
+            const onDisconnect = () => {
+                const database = getDatabase();
+                operatorPeer.destroy();
+                volunteerPeer.destroy();
+                
+                let volunteerRef = ref(database, `/user/volunteer/${volunteerKey}`)
+                    update(volunteerRef, {
+                        is_viewed: true,
+                        disconnected: true
+                    });
+
+                let operatorRef = ref(database, `/user/operator/${operatorKey}`)
+                    update(operatorRef, {
+                        is_viewed: true,
+                        disconnected: true
+                    });
+
+                    console.log('oke');
+
+                if ( confirm('Video Call Ended') ){
+                    window.location.href = "/index.html";
+                }
+            }
+
+            const isVideoEnded = (target) => {
+                if (peered == 0) {
+                    if ( confirm('Video Call Ended') ) {
+                        window.location.href = "/index.html";
+                    }
+                }else{
+                    if (target == 'operator') {
+                        qSelect(`#volunteer-video`).remove();
+                    }else if(target == 'volunteer') {
+                        console.log('ended', peered);
+                        let video = document.createElement('video');
+                            video.classList.add('video');
+                            video.style.height = "100vh";
+                            video.style.objectFit = "cover";
+                            video.style.minWidth = '30%';
+                            video.srcObject = operatorStream;
+                            video.play();
+
+                        qSelect('#operator-video video').remove();
+                        qSelect('#operator-video').append(video);
+                        qSelect('#volunteer-video').remove();
+                    }
                 }
             }
         })

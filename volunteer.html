@@ -43,10 +43,13 @@
     <div id="operator-video"></div>
     <div id="volunteer-video"></div>
     <div class="called">
-        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 50vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Incoming Call...</p>
+        <div style="width: 150px; height: 150px; border-radius: 100px; background-image: url('assets/img/istockphoto-936004740-612x612.jpg');background-position: center; background-size: cover; position: absolute; left: 50%; transform: translate(-50%, -50%); top: 50vh;"></div>
+        <p id="call-text" style="color: white;text-align: center;font-weight: bold; left: 50%; top: 65vh; transform: translate(-50%, -50%); position: absolute; font-size: 20px;">Incoming Call...</p>
         <img src="assets/img/icons/blue/accept-call.webp" style="width: 15%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title="" id="accept-phone" />
     </div>
     <p id="no-call" style="position: absolute;left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold;">Belum ada Panggilan</p>
+    <img id="end_call" src="https://icon-library.com/images/end-call-icon/end-call-icon-9.jpg" style="display: none;width: 18%; height: auto; transform: translate(-50%, -50%); position: absolute; left: 50%; top: 85%;" alt="" title=""/>
+    
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script type="module">
         let myStream;
@@ -118,6 +121,19 @@
                                 is_viewed: true
                             });
                             userPeerID = data.id;
+
+                            // user connection on close
+                            onChildAdded(scheduleChildRef, (snapshot) => {
+                                const data = snapshot.key;
+                                if ( data == 'disconnected') {
+                                    operatorPeer.destroy();
+                                    userPeer.destroy();
+                                        
+                                    if ( confirm('Video Call Ended By User') ){
+                                        window.location.reload();
+                                    }
+                                }
+                            });
                         }
                     })
                 }
@@ -170,6 +186,16 @@
                 video.play();
 
             qSelect('#operator-video').append(video);
+
+            // operator connection on close
+            const database = getDatabase();
+            let operatorChildRef = ref(database, `operator/volunteer/${operatorPeerID}`)
+            onChildAdded(operatorChildRef, (snapshot) => {
+                console.log('childadded', snapshot);
+                if (snapshot.key == 'disconnected') {
+                    qSelect('#operator-video').remove();
+                }
+            });
         }
 
         const addUserVideo = (stream) => {
@@ -182,6 +208,7 @@
                 video.play();
 
             qSelect('#user-video').append(video);
+            qSelect('#end_call').style.display = 'block';
         }
 
         const addVolunteerVideo = (stream) => {
@@ -192,6 +219,28 @@
 
             qSelect('#volunteer-video').append(video);
         }
+        
+        qSelect('#end_call').addEventListener('click', () => {
+            const database = getDatabase();
+            userPeer.destroy();
+            operatorPeer.destroy();
+            
+            let operatorRef = ref(database, `/volunteer/operator/${operatorPeerID}`)
+                update(operatorRef, {
+                    is_viewed: true,
+                    disconnected: true
+                });
+
+            let userRef = ref(database, `/volunteer/user/${userPeerID}`)
+                update(userRef, {
+                    is_viewed: true,
+                    disconnected: true
+                });
+
+            if ( confirm('Video Call Ended') ){
+                window.location.reload();
+            }
+        });
     </script>
 </body>
 </html>
