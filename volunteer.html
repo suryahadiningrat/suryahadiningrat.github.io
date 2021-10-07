@@ -51,8 +51,27 @@
     <script type="module">
         let myStream;
         const qSelect = el => document.querySelector(el);
-        const userPeer  = new Peer();
-        const operatorPeer = new Peer();
+        const userPeer  = new Peer({
+            config: {'iceServers': [
+                { url: 'stun:stun4.l.google.com:19302' },
+                {
+                    url: 'turn:192.158.29.39:3478?transport=udp',
+                    credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                    username: '28224511:1379330808'
+                },
+            ]} /* Sample servers, please use appropriate ones */
+        });
+
+        const operatorPeer = new Peer({
+            config: {'iceServers': [
+                { url: 'stun:stun4.l.google.com:19302' },
+                {
+                    url: 'turn:192.158.29.39:3478?transport=udp',
+                    credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                    username: '28224511:1379330808'
+                },
+            ]} /* Sample servers, please use appropriate ones */
+        });
 
         let userPeerID;
         let operatorPeerID;
